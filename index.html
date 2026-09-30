@@ -1,0 +1,4940 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Simple 2-Point Positioning System</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+
+body {
+
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+
+    background: #f5f6f7;
+
+    color: #222;
+
+    margin: 0;
+
+    padding: 30px 15px;
+
+}
+
+
+.container {
+
+    max-width: 1000px;
+
+    margin: auto;
+
+}
+
+
+h1 {
+
+    margin-bottom: 5px;
+
+}
+
+
+.subtitle {
+
+    color: #666;
+
+    margin-top: 0;
+
+    margin-bottom: 25px;
+
+}
+
+
+.card {
+
+    background: white;
+
+    border-radius: 10px;
+
+    padding: 20px;
+
+    margin-bottom: 20px;
+
+    box-shadow:
+        0 2px 8px rgba(0,0,0,0.06);
+
+}
+
+
+.mode-buttons {
+
+    display: flex;
+
+    gap: 10px;
+
+    margin-bottom: 20px;
+
+}
+
+
+.mode-buttons button {
+
+    flex: 1;
+
+    padding: 12px;
+
+    border: 1px solid #ccc;
+
+    background: #f5f5f5;
+
+    border-radius: 6px;
+
+    cursor: pointer;
+
+    font-weight: bold;
+
+}
+
+
+.mode-buttons button.active {
+
+    background: #222;
+
+    color: white;
+
+    border-color: #222;
+
+}
+
+
+.grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 15px;
+
+}
+
+
+label {
+
+    display: block;
+
+    font-weight: bold;
+
+    margin-bottom: 6px;
+
+}
+
+
+input {
+
+    width: 100%;
+
+    padding: 10px;
+
+    border: 1px solid #ccc;
+
+    border-radius: 5px;
+
+    font-size: 15px;
+
+}
+
+
+button.calculate {
+
+    margin-top: 20px;
+
+    width: 100%;
+
+    padding: 12px;
+
+    border: none;
+
+    border-radius: 6px;
+
+    background: #222;
+
+    color: white;
+
+    font-size: 16px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+}
+
+
+button.calculate:hover {
+
+    background: #444;
+
+}
+
+
+.info {
+
+    color: #666;
+
+    font-size: 14px;
+
+    line-height: 1.5;
+
+}
+
+
+.hidden {
+
+    display: none;
+
+}
+
+
+.result-value {
+
+    font-size: 20px;
+
+    font-weight: bold;
+
+    margin: 10px 0 20px;
+
+}
+
+
+.result-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(auto-fit, minmax(180px, 1fr));
+
+    gap: 12px;
+
+}
+
+
+.result-box {
+
+    background: #f5f6f7;
+
+    padding: 15px;
+
+    border-radius: 7px;
+
+}
+
+
+.result-box strong {
+
+    display: block;
+
+    font-size: 18px;
+
+    margin-top: 5px;
+
+}
+
+
+.error {
+
+    color: #b00020;
+
+    font-weight: bold;
+
+}
+
+
+canvas {
+
+    width: 100%;
+
+    height: 600px;
+
+    display: block;
+
+    background: white;
+
+    border-radius: 8px;
+
+}
+
+
+.legend {
+
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 15px;
+
+    margin-top: 15px;
+
+    font-size: 13px;
+
+}
+
+
+.legend-item {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+}
+
+
+.dot {
+
+    width: 12px;
+
+    height: 12px;
+
+    border-radius: 50%;
+
+}
+
+
+.dot.reference {
+
+    background: #555;
+
+}
+
+
+.dot.calculated {
+
+    background: #d33;
+
+}
+
+
+.line {
+
+    width: 20px;
+
+    height: 2px;
+
+    background: #777;
+
+}
+
+
+.circle {
+
+    width: 12px;
+
+    height: 12px;
+
+    border: 2px solid #777;
+
+    border-radius: 50%;
+
+}
+
+
+hr {
+
+    border: 0;
+
+    border-top: 1px solid #ddd;
+
+    margin: 25px 0;
+
+}
+
+
+@media (max-width: 600px) {
+
+    body {
+
+        padding: 15px 10px;
+
+    }
+
+    canvas {
+
+        height: 450px;
+
+    }
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<h1>Simple Two-Point Positioning System</h1>
+
+
+<p class="subtitle">
+
+Coordinate construction, triangulation, and trilateration using bearings, distances, and latitude/longitude coordinates.
+
+</p>
+
+
+<div class="card">
+
+
+<div class="mode-buttons">
+
+
+<button
+id="findPositionBtn"
+class="active">
+
+Find A and B From My Position
+
+</button>
+
+
+<button
+id="findLandmarkBtn">
+
+Find My Position From A and B
+
+</button>
+
+
+</div>
+
+
+<!-- =====================================================
+     FIND A AND B FROM MY POSITION
+===================================================== -->
+
+
+<div id="positionMode">
+
+
+<h2>Find A and B From My Position</h2>
+
+
+<p class="info">
+
+Enter your latitude and longitude as the geographic reference point.
+
+<br>
+
+Require both <strong>bearings</strong> from YOU to landmarks A and B,
+
+<br>
+
+then, enter the distances from YOU to A and B,
+
+<br>
+
+or,
+
+<br>
+
+enter the A–B distance and either distance from YOU to A or to B.
+
+</p>
+
+
+<div class="grid">
+
+
+<div>
+
+<label>
+YOU Latitude (°)
+</label>
+
+<input
+id="positionLat"
+type="number"
+value="51.0447"
+min="-90"
+max="90"
+step="0.000001">
+
+</div>
+
+
+<div>
+
+<label>
+YOU Longitude (°)
+</label>
+
+<input
+id="positionLon"
+type="number"
+value="-114.0719"
+min="-180"
+max="180"
+step="0.000001">
+
+</div>
+
+
+<div>
+
+<label>
+Bearing YOU → A (°)
+</label>
+
+<input
+id="bearing1A"
+type="number"
+value="315"
+min="0"
+max="360"
+step="0.01">
+
+</div>
+
+
+<div>
+
+<label>
+Bearing YOU → B (°)
+</label>
+
+<input
+id="bearing1B"
+type="number"
+value="45"
+min="0"
+max="360"
+step="0.01">
+
+</div>
+
+
+<div>
+
+<label>
+Distance YOU → A (km)
+</label>
+
+<input
+id="distance1A"
+type="number"
+placeholder="Optional"
+min="0"
+step="0.001">
+
+</div>
+
+
+<div>
+
+<label>
+Distance YOU → B (km)
+</label>
+
+<input
+id="distance1B"
+type="number"
+placeholder="Optional"
+min="0"
+step="0.001">
+
+</div>
+
+
+<div>
+
+<label>
+Known A–B Distance (km)
+</label>
+
+<input
+id="baseline1"
+type="number"
+placeholder="Optional"
+min="0"
+step="0.001">
+
+</div>
+
+
+</div>
+
+
+<button
+class="calculate"
+id="calculatePosition">
+
+Calculate A and B
+
+</button>
+
+
+</div>
+
+
+<!-- =====================================================
+     FIND MY POSITION FROM A AND B
+===================================================== -->
+
+
+<div
+id="landmarkMode"
+class="hidden">
+
+
+<h2>Find My Position From A and B</h2>
+
+
+<p class="info">
+
+Enter the latitude and longitude of A as the geographic reference point.
+
+<br>
+
+Require <strong>A-B distance</strong> and <strong>A → B bearing</strong>,
+
+<br>
+
+then, enter both bearings from A and B toward my position,
+
+<br>
+
+or,
+
+<br>
+
+enter both distances to my position.
+
+</p>
+
+
+<div class="grid">
+
+
+<div>
+
+<label>
+A Latitude (°)
+</label>
+
+<input
+id="landmarkLat"
+type="number"
+value="51.0447"
+min="-90"
+max="90"
+step="0.000001">
+
+</div>
+
+
+<div>
+
+<label>
+A Longitude (°)
+</label>
+
+<input
+id="landmarkLon"
+type="number"
+value="-114.0719"
+min="-180"
+max="180"
+step="0.000001">
+
+</div>
+
+
+<div>
+
+<label>
+A–B Distance (km)
+</label>
+
+<input
+id="baseline2"
+type="number"
+value="10"
+min="0"
+step="0.001">
+
+</div>
+
+
+<div>
+
+<label>
+Bearing A → B (°)
+</label>
+
+<input
+id="baselineBearing"
+type="number"
+value="90"
+min="0"
+max="360"
+step="0.01">
+
+</div>
+
+
+<div>
+
+<label>
+Bearing A → My Position (°)
+</label>
+
+<input
+id="bearing2A"
+type="number"
+placeholder="Optional"
+min="0"
+max="360"
+step="0.01">
+
+</div>
+
+
+<div>
+
+<label>
+Bearing B → My Position (°)
+</label>
+
+<input
+id="bearing2B"
+type="number"
+placeholder="Optional"
+min="0"
+max="360"
+step="0.01">
+
+</div>
+
+
+<div>
+
+<label>
+Distance A → My Position (km)
+</label>
+
+<input
+id="distance2A"
+type="number"
+placeholder="Optional"
+min="0"
+step="0.001">
+
+</div>
+
+
+<div>
+
+<label>
+Distance B → My Position (km)
+</label>
+
+<input
+id="distance2B"
+type="number"
+placeholder="Optional"
+min="0"
+step="0.001">
+
+</div>
+
+
+</div>
+
+
+<button
+class="calculate"
+id="calculateLandmark">
+
+Calculate My Position
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+<!-- =====================================================
+     RESULT
+===================================================== -->
+
+
+<div
+id="result"
+class="card hidden">
+
+</div>
+
+
+<!-- =====================================================
+     GRAPH
+===================================================== -->
+
+
+<div class="card">
+
+
+<h2>Diagram</h2>
+
+
+<canvas id="canvas"></canvas>
+
+
+<div class="legend">
+
+
+<div class="legend-item">
+
+<div class="dot reference"></div>
+
+Reference point
+
+</div>
+
+
+<div class="legend-item">
+
+<div class="dot calculated"></div>
+
+Calculated point
+
+</div>
+
+
+<div class="legend-item">
+
+<div class="line"></div>
+
+Bearing line
+
+</div>
+
+
+<div class="legend-item">
+
+<div class="circle"></div>
+
+Distance circle
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+<!-- =====================================================
+     HOW IT WORKS
+===================================================== -->
+
+
+<div class="card">
+
+
+<h2>How It Works</h2>
+
+
+<p class="info">
+
+<strong>Geographic coordinate system</strong>
+
+<br>
+
+The calculator uses latitude and longitude as the
+real-world reference system.
+
+Internally, the geometry is calculated using a local
+East/North coordinate system. The local coordinates are then converted to
+latitude/longitude using the WGS84 Earth radius
+approximation.
+
+</p>
+
+
+<p class="info">
+
+<strong>Find A and B From My Position — distance method</strong>
+
+<br>
+
+Your latitude and longitude are used as the
+geographic reference point.
+
+The bearings determine the directions to A and B.
+
+Distances determine how far A and B are from you.
+
+Local East/North coordinates are calculated by coordinate construction and
+converted into latitude and longitude.
+
+</p>
+
+
+<p class="info">
+
+<strong>Find A and B From My Position — classic triangulation</strong>
+
+<br>
+
+Your latitude and longitude are used as the geographic
+reference point.
+
+The bearings determine the directions to A and B.
+
+The known A–B distance provides the third side
+of the triangle.
+
+If either YOU → A or YOU → B distance is also known,
+the missing distance can be solved using the
+Law of Cosines.
+
+Depending on the geometry, there can be zero,
+one, or two possible solutions.
+
+</p>
+
+
+<p class="info">
+
+<strong>Find My Position From A and B — classic trilateration</strong>
+
+<br>
+
+A is used as the geographic
+reference point.
+
+The A–B distance and A → B bearing determine
+the geographic position of B.
+
+With two bearings, the bearing lines are intersected
+to determine my position.
+
+Alternatively, bearings can be left blank and the
+distances from A and B to my position can be entered.
+
+The two distance circles are then intersected.
+
+Depending on the geometry, distance-only positioning
+can produce zero, one, or two possible positions.
+
+</p>
+
+
+<p class="info">
+
+<strong>Important geographic limitation</strong>
+
+<br>
+
+The internal calculation uses a local East/North
+tangent-plane approximation with a mean Earth radius.
+
+This is appropriate for relatively local positioning.
+
+For very large distances, especially hundreds or
+thousands of kilometres, Earth's curvature becomes
+significant and a full geodesic calculation should
+be used instead.
+
+</p>
+
+
+<p class="info">
+
+<strong>Bearings use the standard compass convention:</strong>
+
+<br>
+
+0° = North
+
+<br>
+
+90° = East
+
+<br>
+
+180° = South
+
+<br>
+
+270° = West
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+<script>
+
+
+/* =========================================================
+   GLOBAL STATE
+========================================================= */
+
+
+let points = [];
+
+let bearingLines = [];
+
+let circles = [];
+
+
+/* =========================================================
+   EARTH
+========================================================= */
+
+
+/*
+   Mean Earth radius.
+
+   All distances in this calculator are kilometres.
+*/
+
+
+const EARTH_RADIUS_KM = 6371.0088;
+
+
+/* =========================================================
+   CANVAS
+========================================================= */
+
+
+const canvas =
+    document.getElementById("canvas");
+
+
+const ctx =
+    canvas.getContext("2d");
+
+
+const result =
+    document.getElementById("result");
+
+
+/* =========================================================
+   MODE SWITCHING
+========================================================= */
+
+
+document
+    .getElementById("findPositionBtn")
+    .addEventListener("click", () => {
+
+        document
+            .getElementById("positionMode")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("landmarkMode")
+            .classList.add("hidden");
+
+        document
+            .getElementById("findPositionBtn")
+            .classList.add("active");
+
+        document
+            .getElementById("findLandmarkBtn")
+            .classList.remove("active");
+
+        result.classList.add("hidden");
+
+        clearGraph();
+
+    });
+
+
+document
+    .getElementById("findLandmarkBtn")
+    .addEventListener("click", () => {
+
+        document
+            .getElementById("positionMode")
+            .classList.add("hidden");
+
+        document
+            .getElementById("landmarkMode")
+            .classList.remove("hidden");
+
+        document
+            .getElementById("findPositionBtn")
+            .classList.remove("active");
+
+        document
+            .getElementById("findLandmarkBtn")
+            .classList.add("active");
+
+        result.classList.add("hidden");
+
+        clearGraph();
+
+    });
+
+
+/* =========================================================
+   UTILITIES
+========================================================= */
+
+
+function getNumber(id) {
+
+    const value =
+        parseFloat(
+            document.getElementById(id).value
+        );
+
+    return Number.isFinite(value)
+        ? value
+        : null;
+
+}
+
+
+function normalizeBearing(bearing) {
+
+    return (
+        (bearing % 360) + 360
+    ) % 360;
+
+}
+
+
+/* =========================================================
+   VALIDATE LATITUDE / LONGITUDE
+========================================================= */
+
+
+function validLatitude(latitude) {
+
+    return (
+        latitude !== null &&
+        latitude >= -90 &&
+        latitude <= 90
+    );
+
+}
+
+
+function validLongitude(longitude) {
+
+    return (
+        longitude !== null &&
+        longitude >= -180 &&
+        longitude <= 180
+    );
+
+}
+
+
+/* =========================================================
+   BEARING VECTOR
+
+   x = East
+   y = North
+
+   0°   = North
+   90°  = East
+   180° = South
+   270° = West
+========================================================= */
+
+
+function bearingVector(bearing) {
+
+    const radians =
+        normalizeBearing(bearing)
+        * Math.PI / 180;
+
+    return {
+
+        x: Math.sin(radians),
+
+        y: Math.cos(radians)
+
+    };
+
+}
+
+
+/* =========================================================
+   ANGLE BETWEEN TWO BEARINGS
+========================================================= */
+
+
+function calculateBearingAngle(
+    bearingA,
+    bearingB
+) {
+
+    let angle =
+        Math.abs(
+            normalizeBearing(bearingA) -
+            normalizeBearing(bearingB)
+        );
+
+
+    if (angle > 180) {
+
+        angle =
+            360 - angle;
+
+    }
+
+
+    return angle;
+
+}
+
+
+/* =========================================================
+   DISTANCE + ANGLE
+========================================================= */
+
+
+function calculateABDistance(
+    distanceA,
+    distanceB,
+    bearingA,
+    bearingB
+) {
+
+    const angle =
+        calculateBearingAngle(
+            bearingA,
+            bearingB
+        );
+
+
+    const radians =
+        angle * Math.PI / 180;
+
+
+    const distance =
+        Math.sqrt(
+
+            distanceA * distanceA +
+
+            distanceB * distanceB -
+
+            2 *
+            distanceA *
+            distanceB *
+            Math.cos(radians)
+
+        );
+
+
+    return {
+
+        distance: distance,
+
+        angle: angle
+
+    };
+
+}
+
+
+/* =========================================================
+   LOCAL EAST/NORTH → LAT/LONG
+
+   x = Easting in km
+   y = Northing in km
+
+   Uses a local tangent-plane approximation.
+========================================================= */
+
+
+function localToLatLon(
+    originLat,
+    originLon,
+    east,
+    north
+) {
+
+    const latRadians =
+        originLat * Math.PI / 180;
+
+
+    const latitude =
+        originLat +
+        (
+            north /
+            EARTH_RADIUS_KM
+        ) *
+        180 / Math.PI;
+
+
+    const longitude =
+        originLon +
+        (
+            east /
+            (
+                EARTH_RADIUS_KM *
+                Math.cos(latRadians)
+            )
+        ) *
+        180 / Math.PI;
+
+
+    return {
+
+        latitude: latitude,
+
+        longitude: longitude
+
+    };
+
+}
+
+
+/* =========================================================
+   LAT/LONG → LOCAL EAST/NORTH
+
+   Used only when needed for geographic reference.
+
+   x = Easting in km
+   y = Northing in km
+========================================================= */
+
+
+function latLonToLocal(
+    originLat,
+    originLon,
+    latitude,
+    longitude
+) {
+
+    const latRadians =
+        originLat * Math.PI / 180;
+
+
+    const north =
+        (
+            latitude -
+            originLat
+        ) *
+        Math.PI / 180 *
+        EARTH_RADIUS_KM;
+
+
+    const east =
+        (
+            longitude -
+            originLon
+        ) *
+        Math.PI / 180 *
+        EARTH_RADIUS_KM *
+        Math.cos(latRadians);
+
+
+    return {
+
+        x: east,
+
+        y: north
+
+    };
+
+}
+
+
+/* =========================================================
+   FORMAT LAT/LONG
+========================================================= */
+
+
+function formatLatitude(latitude) {
+
+    return latitude.toFixed(6) +
+        "° " +
+        (
+            latitude >= 0
+                ? "N"
+                : "S"
+        );
+
+}
+
+
+function formatLongitude(longitude) {
+
+    return longitude.toFixed(6) +
+        "° " +
+        (
+            longitude >= 0
+                ? "E"
+                : "W"
+        );
+
+}
+
+
+/* =========================================================
+   LINE INTERSECTION
+========================================================= */
+
+
+function lineIntersection(
+    p,
+    d1,
+    q,
+    d2
+) {
+
+    const denominator =
+        d1.x * d2.y -
+        d1.y * d2.x;
+
+
+    if (
+        Math.abs(denominator)
+        < 1e-10
+    ) {
+
+        return null;
+
+    }
+
+
+    const dx =
+        q.x - p.x;
+
+
+    const dy =
+        q.y - p.y;
+
+
+    const t =
+        (
+            dx * d2.y -
+            dy * d2.x
+        )
+        / denominator;
+
+
+    const u =
+        (
+            dx * d1.y -
+            dy * d1.x
+        )
+        / denominator;
+
+
+    return {
+
+        x:
+            p.x + t * d1.x,
+
+        y:
+            p.y + t * d1.y,
+
+        t: t,
+
+        u: u
+
+    };
+
+}
+
+
+/* =========================================================
+   DISTANCE BETWEEN POINTS
+========================================================= */
+
+
+function distance(a, b) {
+
+    return Math.sqrt(
+
+        Math.pow(
+            b.x - a.x,
+            2
+        )
+
+        +
+
+        Math.pow(
+            b.y - a.y,
+            2
+        )
+
+    );
+
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+
+function showError(message) {
+
+    result.classList.remove("hidden");
+
+    result.innerHTML = `
+
+        <div class="error">
+
+            ${message}
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   FIND A AND B FROM MY POSITION
+========================================================= */
+
+
+document
+    .getElementById("calculatePosition")
+    .addEventListener("click", () => {
+
+
+        const originLat =
+            getNumber("positionLat");
+
+
+        const originLon =
+            getNumber("positionLon");
+
+
+        const bearingA =
+            getNumber("bearing1A");
+
+
+        const bearingB =
+            getNumber("bearing1B");
+
+
+        const distanceA =
+            getNumber("distance1A");
+
+
+        const distanceB =
+            getNumber("distance1B");
+
+
+        const suppliedBaseline =
+            getNumber("baseline1");
+
+
+        if (
+            !validLatitude(originLat) ||
+            !validLongitude(originLon)
+        ) {
+
+            showError(
+                "Please enter a valid YOU latitude and longitude."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            bearingA === null ||
+            bearingB === null
+        ) {
+
+            showError(
+                "Please enter both bearings."
+            );
+
+            return;
+
+        }
+
+
+        const validDistanceA =
+            distanceA !== null &&
+            distanceA > 0;
+
+
+        const validDistanceB =
+            distanceB !== null &&
+            distanceB > 0;
+
+
+        const validBaseline =
+            suppliedBaseline !== null &&
+            suppliedBaseline > 0;
+
+
+        const YOU = {
+
+            x: 0,
+
+            y: 0
+
+        };
+
+
+        /* =================================================
+           CLASSIC TRIANGULATION
+        ================================================= */
+
+
+        if (validBaseline) {
+
+
+            const angle =
+                calculateBearingAngle(
+                    bearingA,
+                    bearingB
+                );
+
+
+            const theta =
+                angle * Math.PI / 180;
+
+
+            const cosTheta =
+                Math.cos(theta);
+
+
+            const sinTheta =
+                Math.sin(theta);
+
+
+            /* =================================================
+               BOTH DISTANCES KNOWN
+            ================================================= */
+
+
+            if (
+                validDistanceA &&
+                validDistanceB
+            ) {
+
+
+                const vectorA =
+                    bearingVector(bearingA);
+
+
+                const vectorB =
+                    bearingVector(bearingB);
+
+
+                const A = {
+
+                    x:
+                        vectorA.x *
+                        distanceA,
+
+                    y:
+                        vectorA.y *
+                        distanceA
+
+                };
+
+
+                const B = {
+
+                    x:
+                        vectorB.x *
+                        distanceB,
+
+                    y:
+                        vectorB.y *
+                        distanceB
+
+                };
+
+
+                const calculatedAB =
+                    distance(A, B);
+
+
+                const baselineDifference =
+                    calculatedAB -
+                    suppliedBaseline;
+
+
+                points = [
+
+                    {
+                        x: 0,
+                        y: 0,
+                        label: "YOU",
+                        type: "known"
+                    },
+
+                    {
+                        x: A.x,
+                        y: A.y,
+                        label: "A",
+                        type: "calculated"
+                    },
+
+                    {
+                        x: B.x,
+                        y: B.y,
+                        label: "B",
+                        type: "calculated"
+                    }
+
+                ];
+
+
+                bearingLines = [
+
+                    {
+                        p: YOU,
+                        d:
+                            bearingVector(
+                                bearingA
+                            )
+                    },
+
+                    {
+                        p: YOU,
+                        d:
+                            bearingVector(
+                                bearingB
+                            )
+                    }
+
+                ];
+
+
+                circles = [
+
+                    {
+                        center: YOU,
+                        radius: distanceA
+                    },
+
+                    {
+                        center: YOU,
+                        radius: distanceB
+                    }
+
+                ];
+
+
+                displayPositionResult(
+
+                    A,
+                    B,
+                    calculatedAB,
+                    angle,
+                    suppliedBaseline,
+                    baselineDifference,
+                    originLat,
+                    originLon
+
+                );
+
+
+                draw();
+
+                return;
+
+            }
+
+
+            /* =================================================
+               NO DISTANCE KNOWN
+            ================================================= */
+
+
+            if (
+                !validDistanceA &&
+                !validDistanceB
+            ) {
+
+                showError(
+
+                    "Two bearings and the A–B distance alone cannot determine a unique position. Please enter the distance to A or the distance to B."
+
+                );
+
+                return;
+
+            }
+
+
+            /* =================================================
+               DISTANCE YOU → A KNOWN
+            ================================================= */
+
+
+            if (validDistanceA) {
+
+
+                const discriminant =
+
+                    suppliedBaseline *
+                    suppliedBaseline
+
+                    -
+
+                    distanceA *
+                    distanceA *
+                    sinTheta *
+                    sinTheta;
+
+
+                const tolerance = 1e-10;
+
+
+                if (
+                    discriminant <
+                    -tolerance
+                ) {
+
+                    showError(
+
+                        "No valid position exists for the entered bearings, A–B distance, and YOU → A distance."
+
+                    );
+
+                    return;
+
+                }
+
+
+                const root =
+                    Math.sqrt(
+                        Math.max(
+                            0,
+                            discriminant
+                        )
+                    );
+
+
+                const center =
+                    distanceA *
+                    cosTheta;
+
+
+                const possibleDistances = [
+
+                    center + root,
+
+                    center - root
+
+                ];
+
+
+                const validDistances = [];
+
+
+                possibleDistances.forEach(
+                    d => {
+
+                        if (
+                            d > tolerance &&
+                            !validDistances.some(
+                                existing =>
+                                    Math.abs(
+                                        existing - d
+                                    ) < 1e-8
+                            )
+                        ) {
+
+                            validDistances.push(d);
+
+                        }
+
+                    }
+                );
+
+
+                if (
+                    validDistances.length === 0
+                ) {
+
+                    showError(
+
+                        "The entered geometry produces no positive distance to B."
+
+                    );
+
+                    return;
+
+                }
+
+
+                const vectorA =
+                    bearingVector(
+                        bearingA
+                    );
+
+
+                const vectorB =
+                    bearingVector(
+                        bearingB
+                    );
+
+
+                const solutions =
+                    validDistances.map(
+                        (dB, index) => {
+
+
+                            const A = {
+
+                                x:
+                                    vectorA.x *
+                                    distanceA,
+
+                                y:
+                                    vectorA.y *
+                                    distanceA
+
+                            };
+
+
+                            const B = {
+
+                                x:
+                                    vectorB.x *
+                                    dB,
+
+                                y:
+                                    vectorB.y *
+                                    dB
+
+                            };
+
+
+                            return {
+
+                                number:
+                                    index + 1,
+
+                                A: A,
+
+                                B: B,
+
+                                distanceA:
+                                    distanceA,
+
+                                distanceB:
+                                    dB
+
+                            };
+
+                        }
+                    );
+
+
+                setupClassicGraph(
+                    solutions,
+                    bearingA,
+                    bearingB
+                );
+
+
+                displayClassicSolutions(
+
+                    solutions,
+
+                    angle,
+
+                    suppliedBaseline,
+
+                    originLat,
+                    originLon
+
+                );
+
+
+                draw();
+
+                return;
+
+            }
+
+
+            /* =================================================
+               DISTANCE YOU → B KNOWN
+            ================================================= */
+
+
+            if (validDistanceB) {
+
+
+                const discriminant =
+
+                    suppliedBaseline *
+                    suppliedBaseline
+
+                    -
+
+                    distanceB *
+                    distanceB *
+                    sinTheta *
+                    sinTheta;
+
+
+                const tolerance = 1e-10;
+
+
+                if (
+                    discriminant <
+                    -tolerance
+                ) {
+
+                    showError(
+
+                        "No valid position exists for the entered bearings, A–B distance, and YOU → B distance."
+
+                    );
+
+                    return;
+
+                }
+
+
+                const root =
+                    Math.sqrt(
+                        Math.max(
+                            0,
+                            discriminant
+                        )
+                    );
+
+
+                const center =
+                    distanceB *
+                    cosTheta;
+
+
+                const possibleDistances = [
+
+                    center + root,
+
+                    center - root
+
+                ];
+
+
+                const validDistances = [];
+
+
+                possibleDistances.forEach(
+                    d => {
+
+                        if (
+                            d > tolerance &&
+                            !validDistances.some(
+                                existing =>
+                                    Math.abs(
+                                        existing - d
+                                    ) < 1e-8
+                            )
+                        ) {
+
+                            validDistances.push(d);
+
+                        }
+
+                    }
+                );
+
+
+                if (
+                    validDistances.length === 0
+                ) {
+
+                    showError(
+
+                        "The entered geometry produces no positive distance to A."
+
+                    );
+
+                    return;
+
+                }
+
+
+                const vectorA =
+                    bearingVector(
+                        bearingA
+                    );
+
+
+                const vectorB =
+                    bearingVector(
+                        bearingB
+                    );
+
+
+                const solutions =
+                    validDistances.map(
+                        (dA, index) => {
+
+
+                            const A = {
+
+                                x:
+                                    vectorA.x *
+                                    dA,
+
+                                y:
+                                    vectorA.y *
+                                    dA
+
+                            };
+
+
+                            const B = {
+
+                                x:
+                                    vectorB.x *
+                                    distanceB,
+
+                                y:
+                                    vectorB.y *
+                                    distanceB
+
+                            };
+
+
+                            return {
+
+                                number:
+                                    index + 1,
+
+                                A: A,
+
+                                B: B,
+
+                                distanceA:
+                                    dA,
+
+                                distanceB:
+                                    distanceB
+
+                            };
+
+                        }
+                    );
+
+
+                setupClassicGraph(
+                    solutions,
+                    bearingA,
+                    bearingB
+                );
+
+
+                displayClassicSolutions(
+
+                    solutions,
+
+                    angle,
+
+                    suppliedBaseline,
+
+                    originLat,
+                    originLon
+
+                );
+
+
+                draw();
+
+                return;
+
+            }
+
+        }
+
+
+        /* =================================================
+           NORMAL DISTANCE METHOD
+        ================================================= */
+
+
+        let A = null;
+
+        let B = null;
+
+
+        if (validDistanceA) {
+
+            const v =
+                bearingVector(
+                    bearingA
+                );
+
+
+            A = {
+
+                x:
+                    v.x * distanceA,
+
+                y:
+                    v.y * distanceA
+
+            };
+
+        }
+
+
+        if (validDistanceB) {
+
+            const v =
+                bearingVector(
+                    bearingB
+                );
+
+
+            B = {
+
+                x:
+                    v.x * distanceB,
+
+                y:
+                    v.y * distanceB
+
+            };
+
+        }
+
+
+        let AB = null;
+
+        let angle = null;
+
+
+        if (
+            validDistanceA &&
+            validDistanceB
+        ) {
+
+            const resultAB =
+                calculateABDistance(
+
+                    distanceA,
+                    distanceB,
+                    bearingA,
+                    bearingB
+
+                );
+
+
+            AB =
+                resultAB.distance;
+
+
+            angle =
+                resultAB.angle;
+
+        }
+
+
+        let baselineDifference = null;
+
+
+        if (
+            AB !== null &&
+            validBaseline
+        ) {
+
+            baselineDifference =
+                AB -
+                suppliedBaseline;
+
+        }
+
+
+        points = [
+
+            {
+                x: 0,
+                y: 0,
+                label: "YOU",
+                type: "known"
+            }
+
+        ];
+
+
+        if (A) {
+
+            points.push({
+
+                x: A.x,
+                y: A.y,
+                label: "A",
+                type: "calculated"
+
+            });
+
+        }
+
+
+        if (B) {
+
+            points.push({
+
+                x: B.x,
+                y: B.y,
+                label: "B",
+                type: "calculated"
+
+            });
+
+        }
+
+
+        bearingLines = [];
+
+
+        if (A) {
+
+            bearingLines.push({
+
+                p: YOU,
+
+                d:
+                    bearingVector(
+                        bearingA
+                    )
+
+            });
+
+        }
+
+
+        if (B) {
+
+            bearingLines.push({
+
+                p: YOU,
+
+                d:
+                    bearingVector(
+                        bearingB
+                    )
+
+            });
+
+        }
+
+
+        circles = [];
+
+
+        if (validDistanceA) {
+
+            circles.push({
+
+                center: YOU,
+
+                radius: distanceA
+
+            });
+
+        }
+
+
+        if (validDistanceB) {
+
+            circles.push({
+
+                center: YOU,
+
+                radius: distanceB
+
+            });
+
+        }
+
+
+        displayPositionResult(
+
+            A,
+            B,
+            AB,
+            angle,
+            suppliedBaseline,
+            baselineDifference,
+            originLat,
+            originLon
+
+        );
+
+
+        draw();
+
+    });
+
+
+/* =========================================================
+   CLASSIC GRAPH SETUP
+========================================================= */
+
+
+function setupClassicGraph(
+    solutions,
+    bearingA,
+    bearingB
+) {
+
+
+    points = [
+
+        {
+            x: 0,
+            y: 0,
+            label: "YOU",
+            type: "known"
+        }
+
+    ];
+
+
+    const YOU = {
+
+        x: 0,
+
+        y: 0
+
+    };
+
+
+    bearingLines = [
+
+        {
+            p: YOU,
+
+            d:
+                bearingVector(
+                    bearingA
+                )
+        },
+
+        {
+            p: YOU,
+
+            d:
+                bearingVector(
+                    bearingB
+                )
+
+        }
+
+    ];
+
+
+    circles = [];
+
+
+    solutions.forEach(
+        solution => {
+
+
+            const suffix =
+                solutions.length === 1
+                    ? ""
+                    : solution.number;
+
+
+            points.push({
+
+                x:
+                    solution.A.x,
+
+                y:
+                    solution.A.y,
+
+                label:
+                    "A" + suffix,
+
+                type:
+                    "calculated"
+
+            });
+
+
+            points.push({
+
+                x:
+                    solution.B.x,
+
+                y:
+                    solution.B.y,
+
+                label:
+                    "B" + suffix,
+
+                type:
+                    "calculated"
+
+            });
+
+
+            circles.push({
+
+                center: YOU,
+
+                radius:
+                    solution.distanceA
+
+            });
+
+
+            circles.push({
+
+                center: YOU,
+
+                radius:
+                    solution.distanceB
+
+            });
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   CLASSIC RESULT
+========================================================= */
+
+
+function displayClassicSolutions(
+    solutions,
+    angle,
+    baseline,
+    originLat,
+    originLon
+) {
+
+
+    result.classList.remove("hidden");
+
+
+    let html = `
+
+        <div>
+            My Position
+        </div>
+
+
+        <div class="result-value">
+
+            Latitude =
+            ${formatLatitude(originLat)}
+
+            <br>
+
+            Longitude =
+            ${formatLongitude(originLon)}
+
+        </div>
+
+
+        <div class="result-grid">
+
+
+            <div class="result-box">
+
+                A–B Distance
+
+                <strong>
+
+                    ${baseline.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+            <div class="result-box">
+
+                Angle A–YOU–B
+
+                <strong>
+
+                    ${angle.toFixed(2)}°
+
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    `;
+
+
+    if (solutions.length === 1) {
+
+
+        const s =
+            solutions[0];
+
+
+        const AGeo =
+            localToLatLon(
+                originLat,
+                originLon,
+                s.A.x,
+                s.A.y
+            );
+
+
+        const BGeo =
+            localToLatLon(
+                originLat,
+                originLon,
+                s.B.x,
+                s.B.y
+            );
+
+
+        html += `
+
+            <h3>
+
+                1 possible solution
+
+            </h3>
+
+
+            <div class="result-grid">
+
+
+                <div class="result-box">
+
+                    Distance YOU → A
+
+                    <strong>
+
+                        ${s.distanceA.toFixed(3)} km
+
+                    </strong>
+
+                </div>
+
+
+                <div class="result-box">
+
+                    Distance YOU → B
+
+                    <strong>
+
+                        ${s.distanceB.toFixed(3)} km
+
+                    </strong>
+
+                </div>
+
+
+                <div class="result-box">
+
+                    Landmark A coordinates
+
+                    <strong>
+
+                        ${formatLatitude(AGeo.latitude)}
+
+                        <br>
+
+                        ${formatLongitude(AGeo.longitude)}
+
+                    </strong>
+
+                </div>
+
+
+                <div class="result-box">
+
+                    Landmark B coordinates
+
+                    <strong>
+
+                        ${formatLatitude(BGeo.latitude)}
+
+                        <br>
+
+                        ${formatLongitude(BGeo.longitude)}
+
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        `;
+
+    }
+
+
+    else {
+
+
+        html += `
+
+            <h3>
+
+                ${solutions.length}
+                possible solutions
+
+            </h3>
+
+
+            <p class="info">
+
+                The entered geometry produces
+                multiple mathematical solutions.
+                All valid solutions are shown below.
+
+            </p>
+
+        `;
+
+
+        solutions.forEach(
+            s => {
+
+
+                const AGeo =
+                    localToLatLon(
+                        originLat,
+                        originLon,
+                        s.A.x,
+                        s.A.y
+                    );
+
+
+                const BGeo =
+                    localToLatLon(
+                        originLat,
+                        originLon,
+                        s.B.x,
+                        s.B.y
+                    );
+
+
+                html += `
+
+                    <div class="result-box">
+
+                        Solution ${s.number}
+
+
+                        <div class="result-grid">
+
+
+                            <div>
+
+                                Distance YOU → A
+
+                                <strong>
+
+                                    ${s.distanceA.toFixed(3)} km
+
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                Distance YOU → B
+
+                                <strong>
+
+                                    ${s.distanceB.toFixed(3)} km
+
+                                </strong>
+
+                            </div>
+
+
+                        </div>
+
+
+                        <p class="info">
+
+                            A:
+
+                            ${formatLatitude(AGeo.latitude)},
+                            ${formatLongitude(AGeo.longitude)}
+
+                            <br>
+
+                            B:
+
+                            ${formatLatitude(BGeo.latitude)},
+                            ${formatLongitude(BGeo.longitude)}
+
+                        </p>
+
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+    }
+
+
+    result.innerHTML = html;
+
+}
+
+
+/* =========================================================
+   NORMAL POSITION RESULT
+========================================================= */
+
+
+function displayPositionResult(
+
+    A,
+
+    B,
+
+    AB,
+
+    angle,
+
+    suppliedBaseline,
+    baselineDifference,
+    originLat,
+    originLon
+
+) {
+
+
+    result.classList.remove("hidden");
+
+
+    let html = `
+
+        <div>
+
+            My Position
+
+        </div>
+
+
+        <div class="result-value">
+
+            Latitude =
+            ${formatLatitude(originLat)}
+
+            <br>
+
+            Longitude =
+            ${formatLongitude(originLon)}
+
+        </div>
+
+    `;
+
+
+    if (A) {
+
+        const geoA =
+            localToLatLon(
+                originLat,
+                originLon,
+                A.x,
+                A.y
+            );
+
+
+        html += `
+
+            <div class="result-box">
+
+                Landmark A coordinates
+
+                <strong>
+
+                    ${formatLatitude(geoA.latitude)}
+
+                    <br>
+
+                    ${formatLongitude(geoA.longitude)}
+
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if (B) {
+
+        const geoB =
+            localToLatLon(
+                originLat,
+                originLon,
+                B.x,
+                B.y
+            );
+
+
+        html += `
+
+            <div class="result-box">
+
+                Landmark B coordinates
+
+                <strong>
+
+                    ${formatLatitude(geoB.latitude)}
+
+                    <br>
+
+                    ${formatLongitude(geoB.longitude)}
+
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+
+    if (AB !== null) {
+
+        html += `
+
+            <div class="result-grid">
+
+
+                <div class="result-box">
+
+                    A–B Distance
+
+                    <strong>
+
+                        ${AB.toFixed(3)} km
+
+                    </strong>
+
+                </div>
+
+
+                <div class="result-box">
+
+                    Angle A–YOU–B
+
+                    <strong>
+
+                        ${angle.toFixed(2)}°
+
+                    </strong>
+
+                </div>
+
+
+            </div>
+
+        `;
+
+    }
+
+
+    if (
+        suppliedBaseline !== null &&
+        suppliedBaseline > 0 &&
+        baselineDifference !== null
+    ) {
+
+        html += `
+
+            <p class="info">
+
+                Entered A–B distance:
+
+                <strong>
+
+                    ${suppliedBaseline.toFixed(3)} km
+
+                </strong>
+
+
+                &nbsp; | &nbsp;
+
+
+                Difference:
+
+                <strong>
+
+                    ${baselineDifference.toFixed(3)} km
+
+                </strong>
+
+            </p>
+
+        `;
+
+    }
+
+
+    result.innerHTML = html;
+
+}
+
+
+/* =========================================================
+   FIND MY POSITION FROM A AND B
+========================================================= */
+
+
+/*
+   Find My Position From A and B supports two methods:
+
+   1. Bearing method:
+      A coordinates +
+      A–B baseline +
+      A→B bearing +
+      both bearings toward my position.
+
+   2. Distance-only method:
+      A coordinates +
+      A–B baseline +
+      A→B bearing +
+      distance A → My Position +
+      distance B → My Position.
+
+   Distance-only geometry can produce:
+      0 solutions
+      1 solution
+      2 solutions
+*/
+
+
+document
+    .getElementById("calculateLandmark")
+    .addEventListener("click", () => {
+
+
+        const originLat =
+            getNumber("landmarkLat");
+
+
+        const originLon =
+            getNumber("landmarkLon");
+
+
+        const baseline =
+            getNumber("baseline2");
+
+
+        const baselineBearing =
+            getNumber("baselineBearing");
+
+
+        const bearingA =
+            getNumber("bearing2A");
+
+
+        const bearingB =
+            getNumber("bearing2B");
+
+
+        const distanceA =
+            getNumber("distance2A");
+
+
+        const distanceB =
+            getNumber("distance2B");
+
+
+        if (
+            !validLatitude(originLat) ||
+            !validLongitude(originLon)
+        ) {
+
+            showError(
+                "Please enter a valid latitude and longitude for landmark A."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            baseline === null ||
+            baseline <= 0
+        ) {
+
+            showError(
+                "Please enter a valid A–B distance."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            baselineBearing === null
+        ) {
+
+            showError(
+                "Please enter a valid bearing from A to B."
+            );
+
+            return;
+
+        }
+
+
+        const validBearingA =
+            bearingA !== null;
+
+
+        const validBearingB =
+            bearingB !== null;
+
+
+        const validDistanceA =
+            distanceA !== null &&
+            distanceA > 0;
+
+
+        const validDistanceB =
+            distanceB !== null &&
+            distanceB > 0;
+
+
+        const A = {
+
+            x: 0,
+
+            y: 0
+
+        };
+
+
+        const baselineDirection =
+            bearingVector(
+                baselineBearing
+            );
+
+
+        const B = {
+
+            x:
+                baselineDirection.x *
+                baseline,
+
+            y:
+                baselineDirection.y *
+                baseline
+
+        };
+
+
+        /* =================================================
+           DISTANCE-ONLY METHOD
+        ================================================= */
+
+
+        if (
+            !validBearingA &&
+            !validBearingB
+        ) {
+
+
+            if (
+                !validDistanceA ||
+                !validDistanceB
+            ) {
+
+                showError(
+
+                    "For distance-only positioning, please enter both A → My Position and B → My Position distances."
+
+                );
+
+                return;
+
+            }
+
+
+            const rA =
+                distanceA;
+
+
+            const rB =
+                distanceB;
+
+
+            const c =
+                baseline;
+
+
+            const localX =
+
+                (
+                    rA * rA
+                    -
+                    rB * rB
+                    +
+                    c * c
+                )
+                /
+                (2 * c);
+
+
+            const ySquared =
+
+                rA * rA
+                -
+                localX * localX;
+
+
+            const tolerance = 1e-10;
+
+
+            if (
+                ySquared < -tolerance
+            ) {
+
+                showError(
+
+                    "The two distance circles do not intersect. No valid position exists."
+
+                );
+
+                return;
+
+            }
+
+
+            const localYRoot =
+
+                Math.sqrt(
+                    Math.max(
+                        0,
+                        ySquared
+                    )
+                );
+
+
+            const possibleLandmarks = [];
+
+
+            const u =
+                bearingVector(
+                    baselineBearing
+                );
+
+
+            /*
+               Positive perpendicular direction is
+               90° counterclockwise from A → B.
+            */
+
+
+            const perpendicular = {
+
+                x:
+                    -u.y,
+
+                y:
+                    u.x
+
+            };
+
+
+            function localToWorld(
+                x,
+                y
+            ) {
+
+                return {
+
+                    x:
+                        x * u.x +
+                        y * perpendicular.x,
+
+                    y:
+                        x * u.y +
+                        y * perpendicular.y
+
+                };
+
+            }
+
+
+            if (
+                localYRoot <= tolerance
+            ) {
+
+
+                const world =
+                    localToWorld(
+                        localX,
+                        0
+                    );
+
+
+                possibleLandmarks.push({
+
+                    number: 1,
+
+                    x: world.x,
+
+                    y: world.y,
+
+                    distanceA: rA,
+
+                    distanceB: rB
+
+                });
+
+            }
+
+
+            else {
+
+
+                const world1 =
+                    localToWorld(
+                        localX,
+                        localYRoot
+                    );
+
+
+                const world2 =
+                    localToWorld(
+                        localX,
+                        -localYRoot
+                    );
+
+
+                possibleLandmarks.push({
+
+                    number: 1,
+
+                    x: world1.x,
+
+                    y: world1.y,
+
+                    distanceA: rA,
+
+                    distanceB: rB
+
+                });
+
+
+                possibleLandmarks.push({
+
+                    number: 2,
+
+                    x: world2.x,
+
+                    y: world2.y,
+
+                    distanceA: rA,
+
+                    distanceB: rB
+
+                });
+
+            }
+
+
+            points = [
+
+                {
+                    x: A.x,
+                    y: A.y,
+                    label: "A",
+                    type: "known"
+                },
+
+                {
+                    x: B.x,
+                    y: B.y,
+                    label: "B",
+                    type: "known"
+                }
+
+            ];
+
+
+            possibleLandmarks.forEach(
+                solution => {
+
+                    const suffix =
+                        possibleLandmarks.length === 1
+                            ? ""
+                            : solution.number;
+
+
+                    points.push({
+
+                        x: solution.x,
+
+                        y: solution.y,
+
+                        label:
+                            "MYPOSITION" + suffix,
+
+                        type:
+                            "calculated"
+
+                    });
+
+                }
+            );
+
+
+            bearingLines = [];
+
+
+            circles = [
+
+                {
+                    center: A,
+                    radius: rA
+                },
+
+                {
+                    center: B,
+                    radius: rB
+                }
+
+            ];
+
+
+            displayDistanceOnlyLandmarkResult(
+
+                possibleLandmarks,
+
+                baseline,
+
+                originLat,
+
+                originLon
+
+            );
+
+
+            draw();
+
+            return;
+
+        }
+
+
+        /* =================================================
+           BEARING METHOD
+        ================================================= */
+
+
+        if (
+            !validBearingA ||
+            !validBearingB
+        ) {
+
+            showError(
+
+                "Please enter both bearings, or leave both bearings blank and use both distances."
+
+            );
+
+            return;
+
+        }
+
+
+        const directionA =
+            bearingVector(
+                bearingA
+            );
+
+
+        const directionB =
+            bearingVector(
+                bearingB
+            );
+
+
+        const intersection =
+            lineIntersection(
+
+                A,
+
+                directionA,
+
+                B,
+
+                directionB
+
+            );
+
+
+        if (!intersection) {
+
+            showError(
+                "The two bearings are parallel and cannot determine a landmark."
+            );
+
+            return;
+
+        }
+
+
+        if (
+            intersection.t < 0 ||
+            intersection.u < 0
+        ) {
+
+            showError(
+                "The bearings do not point toward a common landmark. Check the bearing directions."
+            );
+
+            return;
+
+        }
+
+
+        const landmark = {
+
+            x:
+                intersection.x,
+
+            y:
+                intersection.y
+
+        };
+
+
+        const calculatedDistanceA =
+            distance(
+                A,
+                landmark
+            );
+
+
+        const calculatedDistanceB =
+            distance(
+                B,
+                landmark
+            );
+
+
+        let differenceA = null;
+
+        let differenceB = null;
+
+
+        if (
+            validDistanceA
+        ) {
+
+            differenceA =
+                calculatedDistanceA -
+                distanceA;
+
+        }
+
+
+        if (
+            validDistanceB
+        ) {
+
+            differenceB =
+                calculatedDistanceB -
+                distanceB;
+
+        }
+
+
+        points = [
+
+            {
+                x: A.x,
+                y: A.y,
+                label: "A",
+                type: "known"
+            },
+
+            {
+                x: B.x,
+                y: B.y,
+                label: "B",
+                type: "known"
+            },
+
+            {
+                x: landmark.x,
+                y: landmark.y,
+                label: "MYPOSITION",
+                type: "calculated"
+            }
+
+        ];
+
+
+        bearingLines = [
+
+            {
+                p: A,
+                d: directionA
+            },
+
+            {
+                p: B,
+                d: directionB
+            }
+
+        ];
+
+
+        circles = [];
+
+
+        if (
+            validDistanceA
+        ) {
+
+            circles.push({
+
+                center: A,
+
+                radius: distanceA
+
+            });
+
+        }
+
+
+        if (
+            validDistanceB
+        ) {
+
+            circles.push({
+
+                center: B,
+
+                radius: distanceB
+
+            });
+
+        }
+
+
+        displayResult(
+
+            landmark,
+
+            calculatedDistanceA,
+
+            calculatedDistanceB,
+
+            distanceA,
+
+            distanceB,
+
+            baseline,
+
+            originLat,
+            originLon
+
+        );
+
+
+        draw();
+
+    });
+
+
+/* =========================================================
+   DISTANCE-ONLY LANDMARK RESULT
+========================================================= */
+
+
+function displayDistanceOnlyLandmarkResult(
+    solutions,
+    baseline,
+    originLat,
+    originLon
+) {
+
+
+    result.classList.remove("hidden");
+
+
+    let html = `
+
+        <div>
+
+            My Position
+
+        </div>
+
+
+        <div class="result-grid">
+
+
+            <div class="result-box">
+
+                A–B Distance
+
+                <strong>
+
+                    ${baseline.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+            <div class="result-box">
+
+                A → My Position
+
+                <strong>
+
+                    ${solutions[0].distanceA.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+            <div class="result-box">
+
+                B → My Position
+
+                <strong>
+
+                    ${solutions[0].distanceB.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    `;
+
+
+    if (
+        solutions.length === 1
+    ) {
+
+
+        const s =
+            solutions[0];
+
+
+        const geo =
+            localToLatLon(
+                originLat,
+                originLon,
+                s.x,
+                s.y
+            );
+
+
+        html += `
+
+            <h3>
+
+                1 possible solution
+
+            </h3>
+
+
+            <div class="result-box">
+
+                Landmark coordinates
+
+                <strong>
+
+                    ${formatLatitude(geo.latitude)}
+
+                    <br>
+
+                    ${formatLongitude(geo.longitude)}
+
+                </strong>
+
+            </div>
+
+        `;
+
+    }
+
+
+    else {
+
+
+        html += `
+
+            <h3>
+
+                2 possible solutions
+
+            </h3>
+
+
+            <p class="info">
+
+                The two distance circles intersect
+                at two points. Both mathematical
+                my positions are shown below.
+
+            </p>
+
+        `;
+
+
+        solutions.forEach(
+            s => {
+
+
+                const geo =
+                    localToLatLon(
+                        originLat,
+                        originLon,
+                        s.x,
+                        s.y
+                    );
+
+
+                html += `
+
+                    <div class="result-box">
+
+                        Solution ${s.number}
+
+                        <strong>
+
+                            ${formatLatitude(geo.latitude)}
+
+                            <br>
+
+                            ${formatLongitude(geo.longitude)}
+
+                        </strong>
+
+                    </div>
+
+                `;
+
+            }
+        );
+
+    }
+
+
+    result.innerHTML = html;
+
+}
+
+
+/* =========================================================
+   LANDMARK RESULT
+========================================================= */
+
+
+function displayResult(
+
+    landmark,
+
+    calculatedDistanceA,
+
+    calculatedDistanceB,
+
+    enteredDistanceA,
+
+    enteredDistanceB,
+
+    baseline,
+
+    originLat,
+
+    originLon
+
+) {
+
+
+    result.classList.remove("hidden");
+
+
+    const geo =
+        localToLatLon(
+            originLat,
+            originLon,
+            landmark.x,
+            landmark.y
+        );
+
+
+    let html = `
+
+        <div>
+
+            My Position
+
+        </div>
+
+
+        <div class="result-value">
+
+            Latitude =
+            ${formatLatitude(geo.latitude)}
+
+            <br>
+
+            Longitude =
+            ${formatLongitude(geo.longitude)}
+
+        </div>
+
+
+        <div class="result-grid">
+
+
+            <div class="result-box">
+
+                Distance A → My Position
+
+                <strong>
+
+                    ${calculatedDistanceA.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+            <div class="result-box">
+
+                Distance B → My Position
+
+                <strong>
+
+                    ${calculatedDistanceB.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+            <div class="result-box">
+
+                A–B Distance
+
+                <strong>
+
+                    ${baseline.toFixed(3)} km
+
+                </strong>
+
+            </div>
+
+
+        </div>
+
+    `;
+
+
+    if (
+        enteredDistanceA !== null &&
+        enteredDistanceA > 0
+    ) {
+
+        html += `
+
+            <p class="info">
+
+                Entered A → My Position:
+
+                <strong>
+
+                    ${enteredDistanceA.toFixed(3)} km
+
+                </strong>
+
+
+                &nbsp; | &nbsp;
+
+
+                Difference:
+
+                <strong>
+
+                    ${(calculatedDistanceA -
+                      enteredDistanceA).toFixed(3)} km
+
+                </strong>
+
+            </p>
+
+        `;
+
+    }
+
+
+    if (
+        enteredDistanceB !== null &&
+        enteredDistanceB > 0
+    ) {
+
+        html += `
+
+            <p class="info">
+
+                Entered B → My Position:
+
+                <strong>
+
+                    ${enteredDistanceB.toFixed(3)} km
+
+                </strong>
+
+
+                &nbsp; | &nbsp;
+
+
+                Difference:
+
+                <strong>
+
+                    ${(calculatedDistanceB -
+                      enteredDistanceB).toFixed(3)} km
+
+                </strong>
+
+            </p>
+
+        `;
+
+    }
+
+
+    result.innerHTML = html;
+
+}
+
+
+/* =========================================================
+   CANVAS RESIZE
+========================================================= */
+
+
+function resizeCanvas() {
+
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const dpr =
+        window.devicePixelRatio || 1;
+
+
+    canvas.width =
+        rect.width * dpr;
+
+
+    canvas.height =
+        rect.height * dpr;
+
+
+    ctx.setTransform(
+
+        dpr,
+
+        0,
+
+        0,
+
+        dpr,
+
+        0,
+
+        0
+
+    );
+
+
+    draw();
+
+}
+
+
+/* =========================================================
+   DRAW GRAPH
+========================================================= */
+
+
+function draw() {
+
+
+    const width =
+        canvas.clientWidth;
+
+
+    const height =
+        canvas.clientHeight;
+
+
+    ctx.clearRect(
+
+        0,
+
+        0,
+
+        width,
+
+        height
+
+    );
+
+
+    if (!points.length) {
+
+        return;
+
+    }
+
+
+    let minX = Infinity;
+
+    let maxX = -Infinity;
+
+    let minY = Infinity;
+
+    let maxY = -Infinity;
+
+
+    points.forEach(p => {
+
+        minX =
+            Math.min(
+                minX,
+                p.x
+            );
+
+
+        maxX =
+            Math.max(
+                maxX,
+                p.x
+            );
+
+
+        minY =
+            Math.min(
+                minY,
+                p.y
+            );
+
+
+        maxY =
+            Math.max(
+                maxY,
+                p.y
+            );
+
+    });
+
+
+    circles.forEach(c => {
+
+        minX =
+            Math.min(
+                minX,
+                c.center.x - c.radius
+            );
+
+
+        maxX =
+            Math.max(
+                maxX,
+                c.center.x + c.radius
+            );
+
+
+        minY =
+            Math.min(
+                minY,
+                c.center.y - c.radius
+            );
+
+
+        maxY =
+            Math.max(
+                maxY,
+                c.center.y + c.radius
+            );
+
+    });
+
+
+    if (minX === maxX) {
+
+        minX -= 10;
+
+        maxX += 10;
+
+    }
+
+
+    if (minY === maxY) {
+
+        minY -= 10;
+
+        maxY += 10;
+
+    }
+
+
+    const padding = 60;
+
+
+    const rangeX =
+        maxX - minX;
+
+
+    const rangeY =
+        maxY - minY;
+
+
+    const scale =
+        Math.min(
+
+            (width - padding * 2)
+            / rangeX,
+
+            (height - padding * 2)
+            / rangeY
+
+        );
+
+
+    function screenX(x) {
+
+        return (
+
+            padding +
+
+            (x - minX) * scale
+
+        );
+
+    }
+
+
+    function screenY(y) {
+
+        return (
+
+            height -
+
+            padding -
+
+            (y - minY) * scale
+
+        );
+
+    }
+
+
+    /* =================================================
+       BACKGROUND GRID
+    ================================================= */
+
+
+    ctx.strokeStyle = "#eeeeee";
+
+    ctx.lineWidth = 1;
+
+
+    const gridStep =
+        calculateGridStep(
+            rangeX,
+            rangeY
+        );
+
+
+    const startX =
+        Math.floor(
+            minX / gridStep
+        ) * gridStep;
+
+
+    const endX =
+        Math.ceil(
+            maxX / gridStep
+        ) * gridStep;
+
+
+    for (
+        let x = startX;
+        x <= endX;
+        x += gridStep
+    ) {
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+
+            screenX(x),
+
+            0
+
+        );
+
+
+        ctx.lineTo(
+
+            screenX(x),
+
+            height
+
+        );
+
+
+        ctx.stroke();
+
+    }
+
+
+    const startY =
+        Math.floor(
+            minY / gridStep
+        ) * gridStep;
+
+
+    const endY =
+        Math.ceil(
+            maxY / gridStep
+        ) * gridStep;
+
+
+    for (
+        let y = startY;
+        y <= endY;
+        y += gridStep
+    ) {
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+
+            0,
+
+            screenY(y)
+
+        );
+
+
+        ctx.lineTo(
+
+            width,
+
+            screenY(y)
+
+        );
+
+
+        ctx.stroke();
+
+    }
+
+
+    /* =================================================
+       DRAW A-B BASELINE(S)
+    ================================================= */
+
+
+    const pointA =
+        points.find(
+            p => p.label === "A"
+        );
+
+
+    const pointB =
+        points.find(
+            p => p.label === "B"
+        );
+
+
+    if (
+        pointA &&
+        pointB
+    ) {
+
+        ctx.strokeStyle = "#999";
+
+        ctx.lineWidth = 2;
+
+        ctx.setLineDash([6, 5]);
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+
+            screenX(pointA.x),
+
+            screenY(pointA.y)
+
+        );
+
+
+        ctx.lineTo(
+
+            screenX(pointB.x),
+
+            screenY(pointB.y)
+
+        );
+
+
+        ctx.stroke();
+
+
+        ctx.setLineDash([]);
+
+    }
+
+
+    const solutionNumbers = [];
+
+
+    points.forEach(p => {
+
+        const match =
+            p.label.match(/^A(\d+)$/);
+
+
+        if (match) {
+
+            const number =
+                match[1];
+
+
+            if (
+                !solutionNumbers.includes(number)
+            ) {
+
+                solutionNumbers.push(number);
+
+            }
+
+        }
+
+    });
+
+
+    solutionNumbers.forEach(number => {
+
+
+        const A =
+            points.find(
+                p =>
+                    p.label ===
+                    "A" + number
+            );
+
+
+        const B =
+            points.find(
+                p =>
+                    p.label ===
+                    "B" + number
+            );
+
+
+        if (
+            A &&
+            B
+        ) {
+
+            ctx.strokeStyle = "#999";
+
+            ctx.lineWidth = 2;
+
+            ctx.setLineDash([6, 5]);
+
+
+            ctx.beginPath();
+
+
+            ctx.moveTo(
+
+                screenX(A.x),
+
+                screenY(A.y)
+
+            );
+
+
+            ctx.lineTo(
+
+                screenX(B.x),
+
+                screenY(B.y)
+
+            );
+
+
+            ctx.stroke();
+
+
+            ctx.setLineDash([]);
+
+        }
+
+    });
+
+
+    /* =================================================
+       DISTANCE CIRCLES
+    ================================================= */
+
+
+    circles.forEach(c => {
+
+
+        ctx.strokeStyle =
+            "#777";
+
+
+        ctx.lineWidth = 1.5;
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            screenX(c.center.x),
+
+            screenY(c.center.y),
+
+            c.radius * scale,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        ctx.stroke();
+
+    });
+
+
+    /* =================================================
+       BEARING LINES
+    ================================================= */
+
+
+    bearingLines.forEach(line => {
+
+
+        const length =
+            Math.max(
+                rangeX,
+                rangeY
+            ) * 2;
+
+
+        const x1 =
+            line.p.x -
+            line.d.x *
+            length;
+
+
+        const y1 =
+            line.p.y -
+            line.d.y *
+            length;
+
+
+        const x2 =
+            line.p.x +
+            line.d.x *
+            length;
+
+
+        const y2 =
+            line.p.y +
+            line.d.y *
+            length;
+
+
+        ctx.strokeStyle =
+            "#777";
+
+
+        ctx.lineWidth = 1.5;
+
+
+        ctx.setLineDash([8, 5]);
+
+
+        ctx.beginPath();
+
+
+        ctx.moveTo(
+
+            screenX(x1),
+
+            screenY(y1)
+
+        );
+
+
+        ctx.lineTo(
+
+            screenX(x2),
+
+            screenY(y2)
+
+        );
+
+
+        ctx.stroke();
+
+
+        ctx.setLineDash([]);
+
+    });
+
+
+    /* =================================================
+       POINTS
+    ================================================= */
+
+
+    points.forEach(p => {
+
+
+        const x =
+            screenX(p.x);
+
+
+        const y =
+            screenY(p.y);
+
+
+        ctx.beginPath();
+
+
+        ctx.arc(
+
+            x,
+
+            y,
+
+            7,
+
+            0,
+
+            Math.PI * 2
+
+        );
+
+
+        if (
+            p.type === "calculated"
+        ) {
+
+            ctx.fillStyle =
+                "#d33";
+
+        } else {
+
+            ctx.fillStyle =
+                "#555";
+
+        }
+
+
+        ctx.fill();
+
+
+        ctx.fillStyle =
+            "#222";
+
+
+        ctx.font =
+            "bold 13px Arial";
+
+
+        ctx.fillText(
+
+            p.label,
+
+            x + 10,
+
+            y - 10
+
+        );
+
+    });
+
+
+    /* =================================================
+       NORTH INDICATOR
+    ================================================= */
+
+
+    ctx.fillStyle =
+        "#222";
+
+
+    ctx.font =
+        "bold 13px Arial";
+
+
+    ctx.fillText(
+
+        "N",
+
+        width - 35,
+
+        25
+
+    );
+
+
+    ctx.beginPath();
+
+
+    ctx.moveTo(
+
+        width - 25,
+
+        35
+
+    );
+
+
+    ctx.lineTo(
+
+        width - 25,
+
+        55
+
+    );
+
+
+    ctx.strokeStyle =
+        "#222";
+
+
+    ctx.lineWidth = 2;
+
+
+    ctx.stroke();
+
+}
+
+
+/* =========================================================
+   GRID STEP
+========================================================= */
+
+
+function calculateGridStep(
+    rangeX,
+    rangeY
+) {
+
+
+    const range =
+        Math.max(
+            rangeX,
+            rangeY
+        );
+
+
+    const rough =
+        range / 8;
+
+
+    const exponent =
+        Math.floor(
+            Math.log10(rough)
+        );
+
+
+    const fraction =
+        rough /
+        Math.pow(
+            10,
+            exponent
+        );
+
+
+    let niceFraction;
+
+
+    if (fraction <= 1) {
+
+        niceFraction = 1;
+
+    }
+
+    else if (fraction <= 2) {
+
+        niceFraction = 2;
+
+    }
+
+    else if (fraction <= 5) {
+
+        niceFraction = 5;
+
+    }
+
+    else {
+
+        niceFraction = 10;
+
+    }
+
+
+    return (
+
+        niceFraction *
+
+        Math.pow(
+            10,
+            exponent
+        )
+
+    );
+
+}
+
+
+/* =========================================================
+   CLEAR GRAPH
+========================================================= */
+
+
+function clearGraph() {
+
+
+    points = [];
+
+    bearingLines = [];
+
+    circles = [];
+
+
+    const width =
+        canvas.clientWidth;
+
+
+    const height =
+        canvas.clientHeight;
+
+
+    ctx.clearRect(
+
+        0,
+
+        0,
+
+        width,
+
+        height
+
+    );
+
+}
+
+
+/* =========================================================
+   RESIZE
+========================================================= */
+
+
+window.addEventListener(
+
+    "resize",
+
+    resizeCanvas
+
+);
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+
+resizeCanvas();
+
+
+</script>
+
+
+</body>
+
+</html>
